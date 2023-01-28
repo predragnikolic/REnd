@@ -1,0 +1,16 @@
+[
+    {
+        "keys": ["ctrl+shift+["],
+        "command": "rend_fold",
+        "context": [
+            { "key": "selector", "operator": "equal",  "operand": "comment", "match_all": true }
+        ]
+    },
+    {
+        "keys": ["ctrl+shift+]"],
+        "command": "rend_unfold",
+        "context": [
+            { "key": "selector", "operator": "equal",  "operand": "comment", "match_all": true }
+        ]
+    }
+]
