@@ -1,0 +1,10 @@
+[
+    {
+        "caption": "REnd: Fold All",
+        "command": "rend_fold_all"
+    },
+    {
+        "caption": "REnd: Unfold All",
+        "command": "rend_unfold_all"
+    }
+]
