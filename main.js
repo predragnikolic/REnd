@@ -3,17 +3,17 @@ function some_really_long_function(){
 	add_events(x)
 	add_events(y)
 	add_events(z)
-	// endregion
+	//endregion
 
-	// region Validation
+	//region Validation
 	validate(x)
 	validate(y)
 	validate(z)
-	// endregion
+	//endregion
 
-	// region Cleanup
+	//region Cleanup
 	cleanUp(x)
 	cleanUp(y)
 	cleanUp(z)
-	// endregion
+	//endregion
 }
