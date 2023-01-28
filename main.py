@@ -16,8 +16,13 @@ class Marker:
 	def unfold(self):
 		self.view.unfold(self.fold_region)
 
-	def contains(self, point: int):
-		return self.region.contains(point)
+	def is_at_comment(self, point: int):
+		first_line = self.view.line(self.region.begin())
+		end_line = self.view.line(self.region.end())
+		return first_line.contains(point) or end_line.contains(point)
+
+	def contains(self, region: sublime.Region):
+		return self.region.contains(region)
 
 
 class FindEndRegions(sublime_plugin.ViewEventListener):
@@ -48,11 +53,12 @@ class RendFold(sublime_plugin.TextCommand):
 			return
 		cursor = sel[0].b
 		marker_regions = find_marked_regions(self.view)
-		markers = marker_regions_to_marker(self.view, marker_regions, cursor)
+		markers = marker_regions_to_marker(self.view, marker_regions)
 		for m in markers:
-			if m.contains(cursor):
+			if m.is_at_comment(cursor):
 				m.fold()
 				break
+
 
 class RendUnfold(sublime_plugin.TextCommand):
 	def run(self, _: sublime.Edit) -> None:
@@ -61,34 +67,46 @@ class RendUnfold(sublime_plugin.TextCommand):
 			return
 		cursor = sel[0].b
 		marker_regions = find_marked_regions(self.view)
-		markers = marker_regions_to_marker(self.view, marker_regions, cursor)
-		for m in markers:
-			if m.contains(cursor):
-				m.unfold()
-				break
+		markers = marker_regions_to_marker(self.view, marker_regions)
+		for i in range(len(markers)):
+			marker = markers[i]
+			if marker.is_at_comment(cursor):
+				marker.unfold()
+				#region But Fold Inner Markers
+				for inner_marker in markers[i+1:]:
+					if marker.contains(inner_marker.region):
+						inner_marker.fold()
+				#endregion
 
 
 def find_marked_regions(view: sublime.View) -> List[sublime.Region]:
-	return list(filter(lambda r: view.match_selector(r.begin(), 'comment') , view.find_all(r"\bregion\b")))
+	return list(filter(lambda r: view.match_selector(r.begin(), 'comment') , view.find_all(r'(end)?region')))
 
 
-def marker_regions_to_marker(view: sublime.View, marked_regions: List[sublime.Region], cursor_point: Optional[int] = None) -> List[Marker]:
+def marker_regions_to_marker(view: sublime.View, marked_regions: List[sublime.Region]) -> List[Marker]:
 	result: List[Marker] = []
 	for i in range(len(marked_regions)):
 		maybe_start_r = marked_regions[i]
-		if cursor_point and maybe_start_r.begin() > cursor_point:
-			# don't create markers past cursor point
-			break
 		start_word = view.substr(maybe_start_r)
 		if start_word != 'region':
 			continue
-		maybe_end_r = view.find(r'\bendregion\b', maybe_start_r.begin())
-		end_word = view.substr(maybe_end_r)
-		if end_word != 'endregion':
+
+		end_region = None
+		#region Find End Region
+		skip = 0
+		for r in marked_regions[i+1:]:
+			end_word = view.substr(r)
+			if end_word == 'region':
+				skip += 1
+			if end_word == 'endregion':
+				skip -= 1
+			if skip == -1:
+				end_region = r
+				break
+		#endregion
+		if not end_region:
 			continue
 		result.append(
-			Marker(
-				view, sublime.Region(maybe_start_r.begin(), maybe_end_r.end())
-		   )
+			Marker(view, sublime.Region(maybe_start_r.begin(), end_region.end()))
 		)
 	return result
