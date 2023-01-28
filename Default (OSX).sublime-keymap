@@ -1,0 +1,16 @@
+[
+    {
+        "keys": ["super+alt+["],
+        "command": "rend_fold",
+        "context": [
+            { "key": "selector", "operator": "equal",  "operand": "comment", "match_all": true }
+        ]
+    },
+    {
+        "keys": ["super+alt+]"],
+        "command": "rend_unfold",
+        "context": [
+            { "key": "selector", "operator": "equal",  "operand": "comment", "match_all": true }
+        ]
+    }
+]
